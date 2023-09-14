@@ -74,7 +74,7 @@ private:
   uint getAdapterType(const QDBusObjectPath &path);
   QString getIp4Address();
   void deactivateConnectionBySsid(const QString &ssid);
-  void deactivateConnection(const QDBusObjectPath &path);
+  std::optional<QDBusPendingCall> deactivateConnection(const QDBusObjectPath &path);
   QVector<QDBusObjectPath> getActiveConnections();
   QByteArray get_property(const QString &network_path, const QString &property);
   SecurityType getSecurityType(const QVariantMap &properties);

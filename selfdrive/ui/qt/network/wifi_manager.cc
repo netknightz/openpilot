@@ -203,8 +203,8 @@ void WifiManager::deactivateConnectionBySsid(const QString &ssid) {
   }
 }
 
-void WifiManager::deactivateConnection(const QDBusObjectPath &path) {
-  asyncCall(NM_DBUS_PATH, NM_DBUS_INTERFACE, "DeactivateConnection", QVariant::fromValue(path));
+std::optional<QDBusPendingCall> WifiManager::deactivateConnection(const QDBusObjectPath &path) {
+  return asyncCall(NM_DBUS_PATH, NM_DBUS_INTERFACE, "DeactivateConnection", QVariant::fromValue(path));
 }
 
 QVector<QDBusObjectPath> WifiManager::getActiveConnections() {
@@ -392,8 +392,14 @@ void WifiManager::updateGsmSettings(bool roaming, QString apn, bool metered) {
 
     if (changes) {
       call(lteConnectionPath.path(), NM_DBUS_INTERFACE_SETTINGS_CONNECTION, "UpdateUnsaved", QVariant::fromValue(settings));  // update is temporary
-      deactivateConnection(lteConnectionPath);
-      activateModemConnection(lteConnectionPath);
+      auto pending_call = deactivateConnection(lteConnectionPath);
+
+      if (pending_call) {
+        QDBusPendingCallWatcher *watcher = new QDBusPendingCallWatcher(*pending_call);
+        QObject::connect(watcher, &QDBusPendingCallWatcher::finished, this, [=]() {
+          activateModemConnection(lteConnectionPath);
+        });
+      }
     }
   }
 }
