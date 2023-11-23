@@ -177,6 +177,7 @@ QWidget * Setup::network_setup() {
   main_layout->addSpacing(25);
 
   // wifi widget
+  qWarning() << "before Networking(this) in setup.cc";
   Networking *networking = new Networking(this, false);
   networking->setStyleSheet("Networking {background-color: #292929; border-radius: 13px;}");
   main_layout->addWidget(networking, 1);

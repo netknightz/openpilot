@@ -53,8 +53,10 @@ WifiManager::WifiManager(QObject *parent) : QObject(parent) {
 
   adapter = getAdapter();
   if (!adapter.isEmpty()) {
+    qWarning() << "WifiManager setup";
     setup();
   } else {
+    qWarning() << "WifiManager DeviceAdded";
     QDBusConnection::systemBus().connect(NM_DBUS_SERVICE, NM_DBUS_PATH, NM_DBUS_INTERFACE, "DeviceAdded", this, SLOT(deviceAdded(QDBusObjectPath)));
   }
 
@@ -71,7 +73,7 @@ void WifiManager::setup() {
 
   raw_adapter_state = call<uint>(adapter, NM_DBUS_INTERFACE_PROPERTIES, "Get", NM_DBUS_INTERFACE_DEVICE, "State");
   activeAp = call<QDBusObjectPath>(adapter, NM_DBUS_INTERFACE_PROPERTIES, "Get", NM_DBUS_INTERFACE_DEVICE_WIRELESS, "ActiveAccessPoint").path();
-
+  qWarning() << "WifiManager::setup";
   initConnections();
   requestScan();
 }
@@ -204,6 +206,7 @@ void WifiManager::deactivateConnectionBySsid(const QString &ssid) {
 }
 
 std::optional<QDBusPendingCall> WifiManager::deactivateConnection(const QDBusObjectPath &path) {
+  qWarning() << "WifiManager::deactivateConnection";
   return asyncCall(NM_DBUS_PATH, NM_DBUS_INTERFACE, "DeactivateConnection", QVariant::fromValue(path));
 }
 
@@ -284,6 +287,7 @@ void WifiManager::propertyChange(const QString &interface, const QVariantMap &pr
 }
 
 void WifiManager::deviceAdded(const QDBusObjectPath &path) {
+  qWarning() << "WifiManager::deviceAdded";
   if (getAdapterType(path) == NM_DEVICE_TYPE_WIFI && emptyPath(adapter)) {
     adapter = path.path();
     setup();
@@ -313,6 +317,7 @@ Connection WifiManager::getConnectionSettings(const QDBusObjectPath &path) {
 }
 
 void WifiManager::initConnections() {
+  qWarning() << "WifiManager::initConnections";
   const QDBusReply<QList<QDBusObjectPath>> response = call(NM_DBUS_PATH_SETTINGS, NM_DBUS_INTERFACE_SETTINGS, "ListConnections");
   for (const QDBusObjectPath &path : response.value()) {
     const Connection settings = getConnectionSettings(path);
@@ -334,8 +339,10 @@ std::optional<QDBusPendingCall> WifiManager::activateWifiConnection(const QStrin
 }
 
 void WifiManager::activateModemConnection(const QDBusObjectPath &path) {
+  qWarning() << "WifiManager::activateModemConnection";
   QString modem = getAdapter(NM_DEVICE_TYPE_MODEM);
   if (!path.path().isEmpty() && !modem.isEmpty()) {
+    qWarning() << "WifiManager::activateModemConnection - ActivateConnection";
     asyncCall(NM_DBUS_PATH, NM_DBUS_INTERFACE, "ActivateConnection", QVariant::fromValue(path), QVariant::fromValue(QDBusObjectPath(modem)), QVariant::fromValue(QDBusObjectPath("/")));
   }
 }
@@ -361,7 +368,9 @@ NetworkType WifiManager::currentNetworkType() {
 }
 
 void WifiManager::updateGsmSettings(bool roaming, QString apn, bool metered) {
+  qWarning() << "WifiManager::updateGsmSettings 1" << roaming << apn << metered;
   if (!lteConnectionPath.path().isEmpty()) {
+    qWarning() << "WifiManager::updateGsmSettings 2" << roaming << apn << metered;
     bool changes = false;
     bool auto_config = apn.isEmpty();
     Connection settings = getConnectionSettings(lteConnectionPath);
@@ -391,6 +400,7 @@ void WifiManager::updateGsmSettings(bool roaming, QString apn, bool metered) {
     }
 
     if (changes) {
+      qWarning() << "WifiManager::updateGsmSettings UpdateUnsaved" << settings;
       call(lteConnectionPath.path(), NM_DBUS_INTERFACE_SETTINGS_CONNECTION, "UpdateUnsaved", QVariant::fromValue(settings));  // update is temporary
       auto pending_call = deactivateConnection(lteConnectionPath);
 

@@ -64,6 +64,7 @@ Updater::Updater(const QString &updater_path, const QString &manifest_path, QWid
     QVBoxLayout *layout = new QVBoxLayout(wifi);
     layout->setContentsMargins(100, 100, 100, 100);
 
+    qWarning() << "before Networking(this) in updater.cc";
     Networking *networking = new Networking(this, false);
     networking->setStyleSheet("Networking { background-color: #292929; border-radius: 13px; }");
     layout->addWidget(networking, 1);
