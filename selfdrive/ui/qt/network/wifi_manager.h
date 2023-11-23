@@ -70,7 +70,7 @@ private:
   QString activeAp;
   QDBusObjectPath lteConnectionPath;
 
-  QString getAdapter(const uint = NM_DEVICE_TYPE_WIFI);
+  QString getAdapter(const uint adapter_type);
   uint getAdapterType(const QDBusObjectPath &path);
   QString getIp4Address();
   void deactivateConnectionBySsid(const QString &ssid);
