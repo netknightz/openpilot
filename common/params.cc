@@ -7,7 +7,6 @@
 #include <csignal>
 #include <unordered_map>
 
-#include "common/swaglog.h"
 #include "common/util.h"
 #include "system/hardware/hw.h"
 
@@ -282,7 +281,13 @@ int Params::remove(const std::string &key) {
 
 std::string Params::get(const std::string &key, bool block) {
   if (!block) {
-    return util::read_file(getParamPath(key));
+    std::string value = util::read_file(getParamPath(key));
+
+    if (strcmp(key.c_str(), "GsmApn") == 0) {
+      LOGE("Params::get %s: %s", key.c_str(), value.c_str());
+    }
+
+    return value;
   } else {
     // blocking read until successful
     params_do_exit = 0;

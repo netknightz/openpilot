@@ -2,7 +2,10 @@
 
 #include <map>
 #include <string>
+#include <cstring>
 #include <vector>
+
+#include "common/swaglog.h"
 
 enum ParamKeyType {
   PERSISTENT = 0x02,
@@ -24,7 +27,13 @@ public:
   bool checkKey(const std::string &key);
   ParamKeyType getKeyType(const std::string &key);
   inline std::string getParamPath(const std::string &key = {}) {
-    return params_path + prefix + (key.empty() ? "" : "/" + key);
+    std::string path = params_path + prefix + (key.empty() ? "" : "/" + key);
+
+    if (strcmp(key.c_str(), "GsmApn") == 0) {
+      LOGE("Params path: %s", path.c_str());
+    }
+
+    return path;
   }
 
   // Delete a value
