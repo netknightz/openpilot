@@ -10,7 +10,6 @@ import cereal.messaging as messaging
 
 from typing import Any
 from cereal.visionipc import VisionIpcClient, VisionStreamType
-from openpilot.selfdrive.manager.process_config import managed_processes
 from openpilot.selfdrive.test.helpers import with_processes
 
 LLK_DECIMATION = 10
