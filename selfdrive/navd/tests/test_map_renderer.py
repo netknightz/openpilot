@@ -11,6 +11,7 @@ import cereal.messaging as messaging
 from typing import Any
 from cereal.visionipc import VisionIpcClient, VisionStreamType
 from openpilot.selfdrive.manager.process_config import managed_processes
+from openpilot.selfdrive.test.helpers import with_processes
 
 LLK_DECIMATION = 10
 CACHE_PATH = "/data/mbgl-cache-navd.db"
@@ -22,6 +23,8 @@ DEFAULT_ITERATIONS = 30 * LLK_DECIMATION
 
 LOCATION1_REPEATED = [LOCATION1] * DEFAULT_ITERATIONS
 LOCATION2_REPEATED = [LOCATION2] * DEFAULT_ITERATIONS
+
+MAPBOX_PORT = 50132
 
 def gen_llk(location=LOCATION1):
   msg = messaging.new_message('liveLocationKalman')
@@ -60,7 +63,7 @@ class MapBoxInternetDisabledRequestHandler(http.server.BaseHTTPRequestHandler):
 
 class MapBoxInternetDisabledServer(threading.Thread):
   def run(self):
-    self.server = http.server.HTTPServer(("127.0.0.1", 5000), MapBoxInternetDisabledRequestHandler)
+    self.server = http.server.HTTPServer(("127.0.0.1", MAPBOX_PORT), MapBoxInternetDisabledRequestHandler)
     self.server.serve_forever()
 
   def stop(self):
@@ -88,7 +91,7 @@ class TestMapRenderer(unittest.TestCase):
 
   def setUp(self):
     self.server.enable_internet()
-    os.environ['MAPS_HOST'] = 'http://localhost:5000'
+    os.environ['MAPS_HOST'] = f'http://localhost:{MAPBOX_PORT}'
 
     self.sm = messaging.SubMaster(['mapRenderState'])
     self.pm = messaging.PubMaster(['liveLocationKalman'])
@@ -97,13 +100,7 @@ class TestMapRenderer(unittest.TestCase):
     if os.path.exists(CACHE_PATH):
       os.remove(CACHE_PATH)
 
-  def tearDown(self):
-    managed_processes['mapsd'].stop()
-
   def _setup_test(self):
-    # start + sync up
-    managed_processes['mapsd'].start()
-
     assert self.pm.wait_for_readers_to_update("liveLocationKalman", 10)
 
     assert VisionIpcClient.available_streams("navd", False) == {VisionStreamType.VISION_STREAM_MAP, }
@@ -145,7 +142,7 @@ class TestMapRenderer(unittest.TestCase):
       invalid_and_not_previously_valid = (expect_valid and not self.sm.valid['mapRenderState'] and not prev_valid)
       valid_and_not_previously_invalid = (not expect_valid and self.sm.valid['mapRenderState'] and prev_valid)
 
-      if (invalid_and_not_previously_valid or valid_and_not_previously_invalid) and frames_since_test_start < 5:
+      if (invalid_and_not_previously_valid or valid_and_not_previously_invalid) and frames_since_test_start < 10:
         continue
 
       # check output
@@ -166,15 +163,18 @@ class TestMapRenderer(unittest.TestCase):
 
     return render_times
 
+  @with_processes(["mapsd"])
   def test_with_internet(self):
     self._setup_test()
     self._run_test(True)
 
+  @with_processes(["mapsd"])
   def test_with_no_internet(self):
     self.server.disable_internet()
     self._setup_test()
     self._run_test(False)
 
+  @with_processes(["mapsd"])
   def test_recover_from_no_internet(self):
     self._setup_test()
     self._run_test(True)
@@ -189,6 +189,7 @@ class TestMapRenderer(unittest.TestCase):
 
     self._run_test(True, LOCATION2_REPEATED)
 
+  @with_processes(["mapsd"])
   @pytest.mark.tici
   def test_render_time_distribution(self):
     self._setup_test()
