@@ -668,7 +668,11 @@ def stat_handler(end_event: threading.Event) -> None:
 def ws_proxy_recv(ws: WebSocket, local_sock: socket.socket, ssock: socket.socket, end_event: threading.Event, global_end_event: threading.Event) -> None:
   while not (end_event.is_set() or global_end_event.is_set()):
     try:
+      # TODO: this actually throws real exceptions because it recvs text sometimes
+      # kibana: `"bytes-like" AND ws_proxy_recv`
       data = ws.recv()
+      if isinstance(data, str):
+        data = data.encode("utf-8")
       local_sock.sendall(data)
     except WebSocketTimeoutException:
       pass
@@ -753,7 +757,8 @@ def ws_send(ws: WebSocket, end_event: threading.Event) -> None:
 def ws_manage(ws: WebSocket, end_event: threading.Event) -> None:
   params = Params()
   onroad_prev = None
-  sock = ws.sock
+  # we have already connected if we are here
+  sock = cast(socket.socket, ws.sock)
 
   while True:
     onroad = params.get_bool("IsOnroad")
