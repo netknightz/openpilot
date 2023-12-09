@@ -58,7 +58,7 @@ class TestAthenadPing(unittest.TestCase):
     self.exit_event = threading.Event()
     self.athenad = threading.Thread(target=athenad.main, args=(self.exit_event,))
 
-    athenad.create_connection.reset_mock()
+    cast(MagicMock, athenad.create_connection).reset_mock()
 
   def tearDown(self) -> None:
     if self.athenad.is_alive():
@@ -69,8 +69,8 @@ class TestAthenadPing(unittest.TestCase):
     self.athenad.start()
 
     time.sleep(1)
-    athenad.create_connection.assert_called_once()
-    athenad.create_connection.reset_mock()
+    cast(MagicMock, athenad.create_connection).assert_called_once()
+    cast(MagicMock, athenad.create_connection).reset_mock()
 
     # check normal behaviour
     with self.subTest("Wi-Fi: receives ping"), Timeout(70, "no ping received"):
@@ -78,7 +78,7 @@ class TestAthenadPing(unittest.TestCase):
         time.sleep(0.1)
       print("ping received")
 
-    athenad.create_connection.assert_not_called()
+    cast(MagicMock, athenad.create_connection).assert_not_called()
 
     # websocket should attempt reconnect after short time
     with self.subTest("LTE: attempt reconnect"):
@@ -86,7 +86,7 @@ class TestAthenadPing(unittest.TestCase):
       print("waiting for reconnect attempt")
       start_time = time.monotonic()
       with Timeout(reconnect_time, "no reconnect attempt"):
-        while not athenad.create_connection.called:
+        while not cast(MagicMock, athenad.create_connection).called:
           time.sleep(0.1)
         print(f"reconnect attempt after {time.monotonic() - start_time:.2f}s")
 
