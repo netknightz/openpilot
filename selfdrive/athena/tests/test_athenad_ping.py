@@ -4,6 +4,7 @@ import threading
 import time
 import unittest
 from typing import cast, Optional
+from unittest import mock
 
 from openpilot.common.params import Params
 from openpilot.common.timeout import Timeout
@@ -23,7 +24,7 @@ class TestAthenadPing(unittest.TestCase):
   params: Params
   dongle_id: str
 
-  _athenad: threading.Thread
+  athenad: threading.Thread
   exit_event: threading.Event
 
   def _get_ping_time(self) -> Optional[str]:
@@ -47,16 +48,16 @@ class TestAthenadPing(unittest.TestCase):
     self._clear_ping_time()
 
     self.exit_event = threading.Event()
-    self._athenad = threading.Thread(target=athenad.main, args=(self.exit_event,))
+    self.athenad = threading.Thread(target=athenad.main, args=(self.exit_event,))
 
   def tearDown(self) -> None:
-    if self._athenad.is_alive():
+    if self.athenad.is_alive():
       self.exit_event.set()
-      self._athenad.join()
+      self.athenad.join()
 
-  @unittest.mock.patch('openpilot.selfdrive.athena.athenad.create_connection', autospec=True)
-  def assertTimeout(self, reconnect_time: float, mock_create_connection: unittest.mock.MagicMock) -> None:
-    self._athenad.start()
+  @mock.patch('openpilot.selfdrive.athena.athenad.create_connection', autospec=True)
+  def assertTimeout(self, reconnect_time: float, mock_create_connection: mock.MagicMock) -> None:
+    self.athenad.start()
 
     time.sleep(1)
     mock_create_connection.assert_called_once()
