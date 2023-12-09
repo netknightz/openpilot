@@ -379,14 +379,16 @@ class TestAthenadMethods(unittest.TestCase):
 
     athenad.startLocalProxy(end_event, 'ws://localhost:1234', self.SOCKET_PORT)
 
-    ws_recv.put_nowait(b'ping')
-    try:
-      recv = ws_send.get(timeout=5)
-      assert recv == (b'ping', ABNF.OPCODE_BINARY), recv
-    finally:
-      # signal websocket close to athenad.ws_proxy_recv
-      ws_recv.put_nowait(WebSocketConnectionClosedException())
-      socket_thread.join()
+    # ws.recv() is always interpreted as bytes to avoid socket.socket crash
+    for data in (b'ping', 'ping'):
+      ws_recv.put_nowait(data)
+      try:
+        recv = ws_send.get(timeout=5)
+        self.assertEqual(recv, (data, ABNF.OPCODE_BINARY), recv)
+      finally:
+        # signal websocket close to athenad.ws_proxy_recv
+        ws_recv.put_nowait(WebSocketConnectionClosedException())
+        socket_thread.join()
 
   def test_getSshAuthorizedKeys(self):
     keys = dispatcher["getSshAuthorizedKeys"]()
