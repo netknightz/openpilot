@@ -464,7 +464,8 @@ void CameraState::camera_open(MultiCameraState *multi_cam_state_, int camera_num
 
   // Try different sensors one by one until it success.
   if (!init_sensor_lambda(new AR0231) &&
-      !init_sensor_lambda(new OX03C10)) {
+      !init_sensor_lambda(new OX03C10) &&
+      !init_sensor_lambda(new OS04C10)) {
     LOGE("** sensor %d FAILED bringup, disabling", camera_num);
     enabled = false;
     return;
