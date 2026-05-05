@@ -6,7 +6,7 @@ NetworkType = log.DeviceState.NetworkType
 
 class Pc(HardwareBase):
   def get_device_type(self):
-    return "pc"
+    return "tizi"
 
   def get_network_type(self):
     return NetworkType.wifi
