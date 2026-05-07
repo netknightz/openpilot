@@ -448,6 +448,12 @@ class CAR(Platforms):
     chassis_codes={"95", "A5"},
     wmis={WMI.PORSCHE_SUV},
   )
+  AUDI_A4L_B8PA = VolkswagenMLBPlatformConfig(
+    [VWCarDocs("Audi A4L 2013-16")],
+    VolkswagenCarSpecs(mass=1800, wheelbase=2.869, steerRatio=15.9),
+    chassis_codes={"8K"},
+    wmis={WMI.VOLKSWAGEN_CHINA_FAW},
+  )
   SEAT_ATECA_MK1 = VolkswagenMQBPlatformConfig(
     [
       VWCarDocs("CUPRA Ateca 2018-23"),
